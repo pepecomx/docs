@@ -1,0 +1,305 @@
+const template = `
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.5;
+    }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+    h2 {
+      font-size: 18px;
+      margin-top: 18px;
+      margin-bottom: 6px;
+    }
+    .panel {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+      background-color: #fafafa;
+    }
+    label {
+      font-size: 14px;
+    }
+    input[type="number"] {
+      padding: 4px 6px;
+      font-size: 14px;
+      width: 80px;
+    }
+    input[type="range"] {
+      width: 260px;
+    }
+    .values {
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    .values span {
+      display: inline-block;
+      min-width: 140px;
+    }
+    canvas {
+      border: 1px solid #eee;
+      background-color: #ffffff;
+      margin-top: 10px;
+    }
+    .small {
+      font-size: 13px;
+      color: #555;
+    }
+    .highlight {
+      font-weight: bold;
+      color: #b22222;
+    }
+  </style>
+
+  <h1>Problema de optimizaciÇün: Ç­rea mÇ­xima de un rectÇ­ngulo</h1>
+
+  <p>
+    Se desea un rectÇ­ngulo con perÇðmetro fijo <strong>P</strong>.
+    Sabemos que:
+    <br>PerÇðmetro: <code>2x + 2y = P</code> &rarr; <code>x + y = P/2</code> &rarr; <code>y = P/2 - x</code>.
+    <br>Ç?rea: <code>A(x) = x ¶ú y</code>.
+  </p>
+
+  <div class="panel">
+    <h2>1. ParÇ­metros</h2>
+    <label for="perimeterInput">
+      PerÇðmetro P (m):
+    </label>
+    <input type="number" id="perimeterInput" value="40" min="4" step="1" />
+    <span class="small">(debe ser &gt; 0)</span>
+    <br><br>
+
+    <label for="xRange"><strong>Elige el largo x:</strong></label><br>
+    <input type="range" id="xRange" min="0" max="20" step="0.1" value="10" />
+    <span id="xValue"></span> m
+
+    <div class="values">
+      <span>Ancho y: <strong><span id="yValue"></span> m</strong></span>
+      <span>Ç?rea A(x): <strong><span id="areaValue"></span> m¶ý</strong></span>
+    </div>
+
+    <div class="values small">
+      Punto Çüptimo teÇürico (mÇ­ximo Ç­rea):<br>
+      <span>x<sub>opt</sub> = y<sub>opt</sub> = <strong><span id="xOptValue"></span> m</strong></span>
+      <span>A<sub>max</sub> = <strong><span id="areaMaxValue"></span> m¶ý</strong></span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>2. GrÇ­fica del Ç­rea A(x)</h2>
+    <p class="small">
+      La curva muestra el Ç­rea del rectÇ­ngulo para cada posible valor de x
+      (con el perÇðmetro P fijo). El punto rojo es el Ç­rea para el x actual
+      y el punto morado marca el mÇ­ximo.
+    </p>
+    <canvas id="areaCanvas" width="500" height="320"></canvas>
+  </div>
+
+  <div class="panel">
+    <h2>3. Vista del rectÇ­ngulo con las dimensiones actuales</h2>
+    <p class="small">
+      El ancho horizontal representa <strong>x</strong> (largo) y el vertical <strong>y</strong> (ancho).
+      La figura se dibuja a escala para que los estudiantes vean cÇümo cambia la forma al mover el deslizador.
+    </p>
+    <canvas id="rectCanvas" width="400" height="260"></canvas>
+  </div>
+`;
+
+export function renderMaxAreas(root = document.body) {
+  root.innerHTML = template;
+
+  const perimeterInput = root.querySelector('#perimeterInput');
+  const xRange = root.querySelector('#xRange');
+  const xValue = root.querySelector('#xValue');
+  const yValue = root.querySelector('#yValue');
+  const areaValue = root.querySelector('#areaValue');
+  const xOptValue = root.querySelector('#xOptValue');
+  const areaMaxValue = root.querySelector('#areaMaxValue');
+
+  const areaCanvas = root.querySelector('#areaCanvas');
+  const areaCtx = areaCanvas.getContext('2d');
+
+  const rectCanvas = root.querySelector('#rectCanvas');
+  const rectCtx = rectCanvas.getContext('2d');
+
+  // FunciÇün Ç­rea con perÇðmetro P: A(x) = x * (P/2 - x)
+  function area(x, P) {
+    return x * (P / 2 - x);
+  }
+
+  function drawGraph() {
+    const P = parseFloat(perimeterInput.value);
+    const xMin = 0;
+    const xMax = P / 2;
+
+    // Actualizar lÇðmites del slider
+    xRange.min = xMin.toString();
+    xRange.max = xMax.toString();
+
+    // Ajustar valor actual si queda fuera del rango
+    let x = parseFloat(xRange.value);
+    if (x < xMin || x > xMax) {
+      x = xMin;
+      xRange.value = x;
+    }
+
+    // CÇ­lculos principales
+    const y = P / 2 - x;
+    const A = area(x, P);
+
+    const xOpt = P / 4;
+    const yOpt = P / 4;
+    const Amax = area(xOpt, P);
+
+    xValue.textContent = x.toFixed(2);
+    yValue.textContent = y.toFixed(2);
+    areaValue.textContent = A.toFixed(2);
+    xOptValue.textContent = xOpt.toFixed(2);
+    areaMaxValue.textContent = Amax.toFixed(2);
+
+    drawAreaGraph(P, x, A, xOpt, Amax, xMin, xMax);
+    drawRectangle(x, y);
+  }
+
+  function drawAreaGraph(P, x, A, xOpt, Amax, xMin, xMax) {
+    const ctx = areaCtx;
+    const canvas = areaCanvas;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const steps = 300;
+    let yMin = 0;
+    let yMax = Amax * 1.1;
+    if (yMax <= 0) {
+      yMax = 1;
+    }
+
+    const w = canvas.width;
+    const h = canvas.height;
+
+    function toCanvasX(xv) {
+      return ((xv - xMin) / (xMax - xMin)) * (w - 40) + 30;
+    }
+    function toCanvasY(yv) {
+      return h - 30 - ((yv - yMin) / (yMax - yMin)) * (h - 60);
+    }
+
+    // Ejes
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 1;
+
+    // Eje X (A = 0)
+    ctx.beginPath();
+    ctx.moveTo(toCanvasX(xMin), toCanvasY(0));
+    ctx.lineTo(toCanvasX(xMax), toCanvasY(0));
+    ctx.stroke();
+
+    // Eje Y (x = 0)
+    ctx.beginPath();
+    ctx.moveTo(toCanvasX(0), toCanvasY(yMin));
+    ctx.lineTo(toCanvasX(0), toCanvasY(yMax));
+    ctx.stroke();
+
+    // Curva A(x)
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    let first = true;
+    for (let i = 0; i <= steps; i++) {
+      const xi = xMin + (i / steps) * (xMax - xMin);
+      const yi = area(xi, P);
+      const cx = toCanvasX(xi);
+      const cy = toCanvasY(yi);
+      if (first) {
+        ctx.moveTo(cx, cy);
+        first = false;
+      } else {
+        ctx.lineTo(cx, cy);
+      }
+    }
+    ctx.stroke();
+
+    // Punto Çüptimo (mÇ­ximo)
+    ctx.fillStyle = '#7b1fa2'; // morado
+    const cxOpt = toCanvasX(xOpt);
+    const cyOpt = toCanvasY(Amax);
+    ctx.beginPath();
+    ctx.arc(cxOpt, cyOpt, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Punto actual
+    ctx.fillStyle = '#d32f2f'; // rojo
+    const cx = toCanvasX(x);
+    const cy = toCanvasY(A);
+    ctx.beginPath();
+    ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Etiquetas
+    ctx.fillStyle = '#000000';
+    ctx.font = '13px Arial';
+    ctx.fillText('x', w - 25, toCanvasY(0) + 15);
+    ctx.fillText('Ç?rea A(x)', toCanvasX(0) - 40, 20);
+  }
+
+  function drawRectangle(x, y) {
+    const ctx = rectCtx;
+    const canvas = rectCanvas;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (x <= 0 || y <= 0) {
+      ctx.fillStyle = '#555';
+      ctx.font = '14px Arial';
+      ctx.fillText('No se puede formar un rectÇ­ngulo con estas dimensiones.', 20, canvas.height / 2);
+      return;
+    }
+
+    const margin = 40;
+    const availW = canvas.width - 2 * margin;
+    const availH = canvas.height - 2 * margin;
+
+    const maxDim = Math.max(x, y);
+    const scale = Math.min(availW, availH) / maxDim;
+
+    const rectW = x * scale;
+    const rectH = y * scale;
+
+    const startX = (canvas.width - rectW) / 2;
+    const startY = (canvas.height - rectH) / 2;
+
+    // RectÇ­ngulo
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(startX, startY, rectW, rectH);
+
+    // Etiqueta x (base)
+    ctx.fillStyle = '#000000';
+    ctx.font = '14px Arial';
+    ctx.fillText(
+      \`x = \${x.toFixed(2)} m\`,
+      canvas.width / 2 - 50,
+      startY + rectH + 20
+    );
+
+    // Etiqueta y (lado vertical, con texto girado)
+    ctx.save();
+    ctx.translate(startX - 15, canvas.height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(\`y = \${y.toFixed(2)} m\`, -40, 0);
+    ctx.restore();
+  }
+
+  perimeterInput.addEventListener('input', drawGraph);
+  xRange.addEventListener('input', drawGraph);
+
+  drawGraph();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => renderMaxAreas(document.getElementById('app') || document.body));
+} else {
+  renderMaxAreas(document.getElementById('app') || document.body);
+}

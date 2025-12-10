@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Optimización económica con funciones no lineales</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.5;
+    }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+    h2 {
+      font-size: 18px;
+      margin-top: 18px;
+      margin-bottom: 6px;
+    }
+    h3 {
+      font-size: 16px;
+      margin-top: 12px;
+      margin-bottom: 4px;
+    }
+    .panel {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+      background-color: #fafafa;
+    }
+    label {
+      font-size: 14px;
+    }
+    select {
+      padding: 4px 6px;
+      font-size: 14px;
+      min-width: 260px;
+    }
+    input[type="range"] {
+      width: 260px;
+      margin-top: 4px;
+    }
+    input[type="number"] {
+      padding: 3px 6px;
+      font-size: 13px;
+      width: 90px;
+      margin-left: 4px;
+      margin-right: 12px;
+    }
+    .row {
+      margin-top: 6px;
+      margin-bottom: 4px;
+    }
+    .values {
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    .values span {
+      display: inline-block;
+      min-width: 180px;
+    }
+    .small {
+      font-size: 13px;
+      color: #555;
+    }
+    canvas {
+      border: 1px solid #eee;
+      background-color: #ffffff;
+      margin-top: 10px;
+    }
+    .formula {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      background-color: #f0f0f0;
+      padding: 4px 6px;
+      border-radius: 4px;
+      display: block;
+      margin-top: 2px;
+      margin-bottom: 2px;
+    }
+    .param-row {
+      margin-top: 3px;
+      margin-bottom: 3px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Problemas de optimización económica con funciones no lineales</h1>
+
+  <p>
+    En todos estos ejemplos se quiere elegir un valor de <strong>x</strong>
+    (cantidad producida, inversión, descuento, etc.) para <strong>maximizar la utilidad</strong>:
+  </p>
+  <p class="formula">
+    U(x) = Ingreso(x) − Costo(x)
+  </p>
+
+  <!-- Selección de ejemplo -->
+  <div class="panel">
+    <h2>1. Seleccione un ejemplo</h2>
+    <label for="exampleSelect"><strong>Ejemplo:</strong></label><br />
+    <select id="exampleSelect">
+      <option value="e1">Ejemplo 1: Precio baja con la cantidad (demanda) – cuadrática</option>
+      <option value="e2">Ejemplo 2: Costos crecientes por producción – cuadrática</option>
+      <option value="e3">Ejemplo 3: Publicidad digital – función exponencial</option>
+      <option value="e4">Ejemplo 4: Descuento a clientes – utilidad no lineal</option>
+      <option value="e5">Ejemplo 5: Inversión en mantenimiento – función logarítmica</option>
+    </select>
+
+    <div id="exampleText" class="small" style="margin-top:8px;"></div>
+
+    <h3>Formas funcionales (simbólicas)</h3>
+    <div>
+      <span class="formula" id="revenueFormula"></span>
+      <span class="formula" id="costFormula"></span>
+      <span class="formula" id="profitFormula"></span>
+    </div>
+
+    <h3>Parámetros del modelo</h3>
+    <div id="paramContainer" class="small"></div>
+    <div id="paramInfo" class="small" style="margin-top:4px;"></div>
+  </div>
+
+  <!-- Panel slider y valores -->
+  <div class="panel">
+    <h2>2. Explorar la utilidad variando x</h2>
+    <div class="row">
+      <label for="xRange"><strong>Valor de x:</strong></label><br />
+      <input type="range" id="xRange" min="0" max="100" step="0.5" value="10" />
+      <span id="xValue"></span>
+    </div>
+
+    <div class="values">
+      <span>Ingreso I(x): <strong><span id="revValue"></span></strong></span>
+      <span>Costo C(x): <strong><span id="costValue"></span></strong></span>
+    </div>
+    <div class="values">
+      <span>Utilidad U(x): <strong><span id="profitValue"></span></strong></span>
+    </div>
+
+    <div class="values small" style="margin-top:10px;">
+      <div><strong>Máximo aproximado dentro del rango del ejemplo:</strong></div>
+      <span>x<sub>máx</sub> ≈ <strong><span id="xOptValue"></span></strong></span>
+      <span>U(x<sub>máx</sub>) ≈ <strong><span id="uOptValue"></span></strong></span>
+      <div id="optComment" style="margin-top:4px;"></div>
+    </div>
+  </div>
+
+  <!-- Panel gráfica -->
+  <div class="panel">
+    <h2>3. Gráficas de ingreso, costo y utilidad</h2>
+    <p class="small">
+      Se grafican:
+      <br>• Ingreso total I(x) (línea azul)
+      <br>• Costo total C(x) (línea naranja)
+      <br>• Utilidad U(x) (línea verde)
+      <br>El punto rojo es el valor actual elegido con el deslizador. El punto morado marca el máximo aproximado de U(x).
+    </p>
+    <canvas id="profitCanvas" width="600" height="360"></canvas>
+  </div>
+
+  <script>
+    // Definición de ejemplos no lineales con parámetros editables
+    const EXAMPLES = {
+      e1: {
+        title: "Ejemplo 1: Precio baja con la cantidad (demanda) – cuadrática",
+        description:
+          "Una empresa vende un producto donde el precio baja al aumentar la cantidad vendida: " +
+          "p(x) = a − b·x. El costo es C(x) = C_f + C_v·x. La utilidad es U(x) = I(x) − C(x). " +
+          "x es la cantidad vendida.",
+        xMax: 200,
+        symbolicRevenue: "I(x) = (a − b·x) · x",
+        symbolicCost: "C(x) = C_f + C_v·x",
+        symbolicProfit: "U(x) = I(x) − C(x)",
+        params: [
+          { key: "a",  label: "a (precio base)",                 default: 120, step: 1 },
+          { key: "b",  label: "b (sensibilidad al precio)",      default: 0.5, step: 0.1 },
+          { key: "cf", label: "C_f (costo fijo)",                default: 500, step: 50 },
+          { key: "cv", label: "C_v (costo variable por unidad)", default: 20,  step: 1 }
+        ],
+        revenue: function (x, p) {
+          const price = p.a - p.b * x;
+          if (price < 0) return 0;
+          return price * x;
+        },
+        cost: function (x, p) {
+          return p.cf + p.cv * x;
+        }
+      },
+      e2: {
+        title: "Ejemplo 2: Costos crecientes por producción – cuadrática",
+        description:
+          "Una fábrica vende a precio fijo p, pero sus costos crecen de forma no lineal " +
+          "por horas extra, mantenimiento, etc. C(x) = C_f + C_v·x + c₂·x². x es la cantidad producida.",
+        xMax: 60,
+        symbolicRevenue: "I(x) = p·x",
+        symbolicCost: "C(x) = C_f + C_v·x + c₂·x²",
+        symbolicProfit: "U(x) = I(x) − C(x)",
+        params: [
+          { key: "p",  label: "p (precio por unidad)",   default: 80,  step: 1 },
+          { key: "cf", label: "C_f (costo fijo)",        default: 400, step: 50 },
+          { key: "cv", label: "C_v (costo lineal)",      default: 20,  step: 1 },
+          { key: "c2", label: "c₂ (coeficiente cuadrático)", default: 0.8, step: 0.1 }
+        ],
+        revenue: function (x, p) {
+          return p.p * x;
+        },
+        cost: function (x, p) {
+          return p.cf + p.cv * x + p.c2 * x * x;
+        }
+      },
+      e3: {
+        title: "Ejemplo 3: Publicidad digital – función exponencial",
+        description:
+          "Una empresa invierte x miles de pesos en publicidad digital. " +
+          "El beneficio bruto es I(x) = B·(1 − e^(−k·x)). El costo de la campaña es c·x. " +
+          "Hay un punto donde seguir invirtiendo ya no es tan rentable.",
+        xMax: 10,
+        symbolicRevenue: "I(x) = B·(1 − e^(−k·x))",
+        symbolicCost: "C(x) = c·x",
+        symbolicProfit: "U(x) = I(x) − C(x)",
+        params: [
+          { key: "B", label: "B (máximo beneficio)",             default: 500, step: 10 },
+          { key: "k", label: "k (velocidad de saturación)",      default: 0.4, step: 0.05 },
+          { key: "c", label: "c (costo por unidad de x)",        default: 100, step: 5 }
+        ],
+        revenue: function (x, p) {
+          return p.B * (1 - Math.exp(-p.k * x));
+        },
+        cost: function (x, p) {
+          return p.c * x;
+        }
+      },
+      e4: {
+        title: "Ejemplo 4: Descuento a clientes – utilidad no lineal",
+        description:
+          "Una tienda ofrece un descuento de x% (entre 0 y 40). Un mayor descuento aumenta las ventas, " +
+          "pero reduce el ingreso por unidad. El beneficio adicional por volumen es I(x) = B·(1 − e^(−k·x)), " +
+          "y el costo del descuento es c·x. Buscamos un nivel de descuento razonable.",
+        xMax: 40,
+        symbolicRevenue: "I(x) = B·(1 − e^(−k·x))",
+        symbolicCost: "C(x) = c·x",
+        symbolicProfit: "U(x) = I(x) − C(x)",
+        params: [
+          { key: "B", label: "B (máximo beneficio)",              default: 2000, step: 50 },
+          { key: "k", label: "k (sensibilidad al descuento)",     default: 0.1,  step: 0.01 },
+          { key: "c", label: "c (costo por punto de descuento)",  default: 50,   step: 1 }
+        ],
+        revenue: function (x, p) {
+          return p.B * (1 - Math.exp(-p.k * x));
+        },
+        cost: function (x, p) {
+          return p.c * x;
+        }
+      },
+      e5: {
+        title: "Ejemplo 5: Inversión en mantenimiento – función logarítmica",
+        description:
+          "Una empresa invierte x miles de pesos en mantenimiento preventivo. " +
+          "El ahorro esperado es I(x) = A·ln(1 + x), mientras que el costo es c·x. " +
+          "La primera inversión rinde mucho, pero después los beneficios adicionales son menores.",
+        xMax: 15,
+        symbolicRevenue: "I(x) = A·ln(1 + x)",
+        symbolicCost: "C(x) = c·x",
+        symbolicProfit: "U(x) = I(x) − C(x)",
+        params: [
+          { key: "A", label: "A (escala del ahorro)", default: 300, step: 10 },
+          { key: "c", label: "c (costo por unidad de x)", default: 80, step: 5 }
+        ],
+        revenue: function (x, p) {
+          if (x <= -1) return NaN;
+          return p.A * Math.log(1 + x);
+        },
+        cost: function (x, p) {
+          return p.c * x;
+        }
+      }
+    };
+
+    const exampleSelect   = document.getElementById("exampleSelect");
+    const exampleText     = document.getElementById("exampleText");
+    const revenueFormula  = document.getElementById("revenueFormula");
+    const costFormula     = document.getElementById("costFormula");
+    const profitFormula   = document.getElementById("profitFormula");
+    const paramContainer  = document.getElementById("paramContainer");
+    const paramInfo       = document.getElementById("paramInfo");
+
+    const xRange      = document.getElementById("xRange");
+    const xValue      = document.getElementById("xValue");
+    const revValue    = document.getElementById("revValue");
+    const costValue   = document.getElementById("costValue");
+    const profitValue = document.getElementById("profitValue");
+    const xOptValue   = document.getElementById("xOptValue");
+    const uOptValue   = document.getElementById("uOptValue");
+    const optComment  = document.getElementById("optComment");
+
+    const profitCanvas = document.getElementById("profitCanvas");
+    const profitCtx    = profitCanvas.getContext("2d");
+
+    let currentExampleKey = "e1";
+
+    function getCurrentExample() {
+      return EXAMPLES[currentExampleKey];
+    }
+
+    function buildParamInputs(ex) {
+      paramContainer.innerHTML = "";
+      if (!ex.params || ex.params.length === 0) {
+        paramInfo.textContent = "Este ejemplo no tiene parámetros editables.";
+        return;
+      }
+      ex.params.forEach(p => {
+        const row = document.createElement("div");
+        row.className = "param-row";
+        const label = document.createElement("label");
+        label.textContent = p.label + ":";
+        const input = document.createElement("input");
+        input.type = "number";
+        input.className = "param-input";
+        input.setAttribute("data-key", p.key);
+        input.value = p.default;
+        if (p.step !== undefined) input.step = p.step;
+        row.appendChild(label);
+        row.appendChild(input);
+        paramContainer.appendChild(row);
+      });
+    }
+
+    function readParams(ex) {
+      const inputs = paramContainer.querySelectorAll(".param-input");
+      const params = {};
+      inputs.forEach(inp => {
+        const key = inp.getAttribute("data-key");
+        let val = parseFloat(inp.value);
+        if (!isFinite(val)) {
+          const def = ex.params.find(p => p.key === key)?.default;
+          val = def !== undefined ? def : 0;
+          inp.value = val;
+        }
+        params[key] = val;
+      });
+      const list = Object.entries(params).map(([k, v]) => `${k} = ${v.toFixed(2)}`).join(", ");
+      paramInfo.textContent = "Valores actuales: " + list;
+      return params;
+    }
+
+    function setExample(key) {
+      currentExampleKey = key;
+      const ex = getCurrentExample();
+
+      exampleText.textContent   = ex.description;
+      revenueFormula.textContent = "Ingreso: " + ex.symbolicRevenue;
+      costFormula.textContent    = "Costo:   " + ex.symbolicCost;
+      profitFormula.textContent  = "Utilidad: " + ex.symbolicProfit;
+
+      buildParamInputs(ex);
+
+      xRange.min = "0";
+      xRange.max = ex.xMax.toString();
+      xRange.step = (ex.xMax <= 20) ? "0.1" : "0.5";
+      xRange.value = (ex.xMax / 4).toString();
+
+      actualizar();
+    }
+
+    function actualizar() {
+      const ex = getCurrentExample();
+      const params = readParams(ex);
+      const xMax = ex.xMax;
+      const x = parseFloat(xRange.value);
+
+      const I = ex.revenue(x, params);
+      const C = ex.cost(x, params);
+      const U = I - C;
+
+      xValue.textContent      = x.toFixed(2);
+      revValue.textContent    = isFinite(I) ? I.toFixed(2) : "NaN";
+      costValue.textContent   = isFinite(C) ? C.toFixed(2) : "NaN";
+      profitValue.textContent = isFinite(U) ? U.toFixed(2) : "NaN";
+
+      // Máximo aproximado de U(x) en [0, xMax]
+      let bestX = 0;
+      let bestU = -Infinity;
+      const steps = 400;
+      for (let i = 0; i <= steps; i++) {
+        const t = (xMax * i) / steps;
+        const It = ex.revenue(t, params);
+        const Ct = ex.cost(t, params);
+        const Ut = It - Ct;
+        if (!isFinite(Ut)) continue;
+        if (Ut > bestU) {
+          bestU = Ut;
+          bestX = t;
+        }
+      }
+
+      xOptValue.textContent = bestX.toFixed(2);
+      uOptValue.textContent = isFinite(bestU) ? bestU.toFixed(2) : "NaN";
+
+      optComment.textContent =
+        "El máximo se calcula de forma numérica evaluando muchos puntos en el intervalo permitido para x.";
+
+      dibujarGrafica(ex, params, x, bestX);
+    }
+
+    function dibujarGrafica(ex, params, xActual, xOpt) {
+      const canvas = profitCanvas;
+      const ctx = profitCtx;
+      const w = canvas.width;
+      const h = canvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const xMax = ex.xMax;
+      const steps = 400;
+      const xs = [];
+      const Is = [];
+      const Cs = [];
+      const Us = [];
+      let yMin = Infinity;
+      let yMax = -Infinity;
+
+      for (let i = 0; i <= steps; i++) {
+        const x = (xMax * i) / steps;
+        const I = ex.revenue(x, params);
+        const C = ex.cost(x, params);
+        const U = I - C;
+        xs.push(x);
+        Is.push(I);
+        Cs.push(C);
+        Us.push(U);
+        if (!isFinite(I) || !isFinite(C) || !isFinite(U)) continue;
+        if (I < yMin) yMin = I;
+        if (C < yMin) yMin = C;
+        if (U < yMin) yMin = U;
+        if (I > yMax) yMax = I;
+        if (C > yMax) yMax = C;
+        if (U > yMax) yMax = U;
+      }
+
+      if (!isFinite(yMin) || !isFinite(yMax)) {
+        yMin = -1;
+        yMax = 1;
+      }
+      if (yMin === yMax) {
+        yMin -= 1;
+        yMax += 1;
+      } else {
+        const pad = 0.1 * (yMax - yMin);
+        yMin -= pad;
+        yMax += pad;
+      }
+
+      const xMin = 0;
+
+      function toCanvasX(x) {
+        return 40 + (x - xMin) / (xMax - xMin) * (w - 70);
+      }
+      function toCanvasY(y) {
+        return h - 40 - (y - yMin) / (yMax - yMin) * (h - 70);
+      }
+
+      // Ejes
+      ctx.strokeStyle = "#cccccc";
+      ctx.lineWidth = 1;
+
+      // Eje X (y = 0)
+      if (yMin < 0 && yMax > 0) {
+        const y0 = toCanvasY(0);
+        ctx.beginPath();
+        ctx.moveTo(toCanvasX(xMin), y0);
+        ctx.lineTo(toCanvasX(xMax), y0);
+        ctx.stroke();
+      }
+
+      // Eje Y (x = 0)
+      const x0 = toCanvasX(0);
+      ctx.beginPath();
+      ctx.moveTo(x0, toCanvasY(yMin));
+      ctx.lineTo(x0, toCanvasY(yMax));
+      ctx.stroke();
+
+      // Curva Ingreso (azul)
+      ctx.strokeStyle = "#1565c0";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      let first = true;
+      for (let i = 0; i <= steps; i++) {
+        if (!isFinite(Is[i])) continue;
+        const cx = toCanvasX(xs[i]);
+        const cy = toCanvasY(Is[i]);
+        if (first) { ctx.moveTo(cx, cy); first = false; }
+        else ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+
+      // Curva Costo (naranja)
+      ctx.strokeStyle = "#ef6c00";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      first = true;
+      for (let i = 0; i <= steps; i++) {
+        if (!isFinite(Cs[i])) continue;
+        const cx = toCanvasX(xs[i]);
+        const cy = toCanvasY(Cs[i]);
+        if (first) { ctx.moveTo(cx, cy); first = false; }
+        else ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+
+      // Curva Utilidad (verde)
+      ctx.strokeStyle = "#2e7d32";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      first = true;
+      for (let i = 0; i <= steps; i++) {
+        if (!isFinite(Us[i])) continue;
+        const cx = toCanvasX(xs[i]);
+        const cy = toCanvasY(Us[i]);
+        if (first) { ctx.moveTo(cx, cy); first = false; }
+        else ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+
+      // Punto actual (rojo) en U(x)
+      const Iactual = ex.revenue(xActual, params);
+      const Cactual = ex.cost(xActual, params);
+      const Uactual = Iactual - Cactual;
+      if (isFinite(Uactual)) {
+        ctx.fillStyle = "#d32f2f";
+        ctx.beginPath();
+        ctx.arc(toCanvasX(xActual), toCanvasY(Uactual), 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Punto máximo aproximado (morado)
+      const Iopt = ex.revenue(xOpt, params);
+      const Copt = ex.cost(xOpt, params);
+      const Uopt = Iopt - Copt;
+      if (isFinite(Uopt)) {
+        ctx.fillStyle = "#7b1fa2";
+        ctx.beginPath();
+        ctx.arc(toCanvasX(xOpt), toCanvasY(Uopt), 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Etiquetas
+      ctx.fillStyle = "#000000";
+      ctx.font = "13px Arial";
+      ctx.fillText("x", w - 25, h - 15);
+      ctx.save();
+      ctx.translate(15, 40);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText("Pesos / utilidad", 0, 0);
+      ctx.restore();
+
+      // Leyenda
+      ctx.font = "12px Arial";
+      ctx.fillStyle = "#1565c0";
+      ctx.fillText("Ingreso I(x)", 60, 20);
+      ctx.fillStyle = "#ef6c00";
+      ctx.fillText("Costo C(x)", 160, 20);
+      ctx.fillStyle = "#2e7d32";
+      ctx.fillText("Utilidad U(x)", 260, 20);
+    }
+
+    exampleSelect.addEventListener("change", function () {
+      setExample(this.value);
+    });
+    xRange.addEventListener("input", actualizar);
+    paramContainer.addEventListener("input", function (e) {
+      if (e.target.classList.contains("param-input")) {
+        actualizar();
+      }
+    });
+
+    // Inicializar
+    setExample("e1");
+  </script>
+</body>
+</html>

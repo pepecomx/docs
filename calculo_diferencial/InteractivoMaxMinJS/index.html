@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>4.0 Extremos de funciones – Versión JS</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Plotly para las gráficas -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <p style="margin: 1rem;"><a href="../index.html" style="text-decoration:none;color:#1d4ed8;">&larr; Volver a Materias</a></p>
+    <header>
+        <h1>4.0 Extremos de funciones – Intervalo interactivo</h1>
+    </header>
+
+    <main>
+        <div class="card">
+            <p>
+                Selecciona una función y elige un intervalo <strong>[a, b]</strong>. Después:
+            </p>
+            <ul>
+                <li>Identifica en la gráfica los <strong>máximos y mínimos relativos</strong> dentro del intervalo.</li>
+                <li>Determina los <strong>extremos absolutos</strong> en ese intervalo.</li>
+            </ul>
+            <p class="hint">
+                1) Elige la función (o escribe una personalizada).
+                2) Indica el intervalo.
+                3) Oprime <strong>“Graficar”</strong>.
+                4) Si quieres ver los extremos marcados, usa <strong>“Mostrar solución”</strong>.
+            </p>
+        </div>
+
+        <div class="card">
+            <div class="controls-row">
+                <div>
+                    <label for="func-select">Función:&nbsp;</label>
+                    <select id="func-select"></select>
+                </div>
+                <div>
+                    <label for="interval-a">a:</label>
+                    <input id="interval-a" type="number" step="0.1">
+                </div>
+                <div>
+                    <label for="interval-b">b:</label>
+                    <input id="interval-b" type="number" step="0.1">
+                </div>
+            </div>
+            <div id="interval-error" class="error"></div>
+
+            <div style="margin-top: 1rem;">
+                <strong>Función seleccionada:</strong>
+                <span id="func-text"></span>
+                <div class="hint" id="interval-default-text"></div>
+            </div>
+
+            <div id="custom-func-container" style="margin-top: 1rem; display: none;">
+                <label for="custom-f">Función personalizada f(x) = </label>
+                <input id="custom-f" type="text" size="45" placeholder="Ej: x**3 - 3*x**2">
+                <div class="hint">
+                    Usa <strong>x</strong>. Sintaxis: <code>+ - * / ^ ** sin() cos() exp() log() sqrt() pi</code>.
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+             <div class="controls-row">
+                <button id="btn-plot">Graficar</button>
+                <button id="btn-toggle-solution">Mostrar solución</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div id="graph"></div>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-top:0;">Descripción de los extremos</h2>
+            <div id="solution-description" class="solution-text">
+                (Primero grafica y luego, si deseas, activa “Mostrar solución”).
+            </div>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

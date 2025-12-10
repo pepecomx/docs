@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4.2 Posicion, Velocidad y Aceleracion</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.5;
+    }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 5px;
+    }
+    h2 {
+      font-size: 18px;
+      margin-top: 20px;
+      margin-bottom: 5px;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 10px;
+    }
+    .panel {
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 6px;
+      flex: 1 1 380px;
+      max-width: 450px;
+    }
+    canvas {
+      border: 1px solid #eee;
+      margin-top: 10px;
+      background-color: #fafafa;
+    }
+    .slider-container {
+      margin-top: 15px;
+      margin-bottom: 10px;
+    }
+    .info-box {
+      font-size: 14px;
+      background-color: #f5f5f5;
+      padding: 8px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+    .highlight {
+      font-weight: bold;
+      color: #b22222;
+    }
+    .small {
+      font-size: 13px;
+      color: #555;
+    }
+    .em-blue {
+      color: #1d4ed8;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <p style="margin: 1rem;"><a href="../index.html" style="text-decoration:none;color:#1d4ed8;">&larr; Volver a Materias</a></p>
+  <h1>4.2 Razon de Cambio: Posicion, Velocidad y Aceleracion</h1>
+  <p>
+    En fisica, la <strong class="em-blue">derivada de la posicion con respecto al tiempo</strong> es la
+    <strong class="em-blue">velocidad</strong>, y la <strong class="em-blue">derivada de la velocidad</strong> es la
+    <strong class="em-blue">aceleracion</strong>.
+  </p>
+  <p>
+    En este ejemplo trabajamos con la funcion de posicion:
+    <strong class="em-blue">P(t) = t^2 - 4t</strong>.
+    Su derivada es la velocidad, y la derivada de la velocidad es la aceleracion.
+  </p>
+
+  <h2>Interaccion</h2>
+  <p>
+    Mueve el control deslizante para elegir un instante de tiempo <strong class="em-blue">t</strong>.
+    Observa:
+  </p>
+  <ul>
+    <li>Como cambia la <strong class="em-blue">altura</strong> del punto en la grafica de posicion P(t).</li>
+    <li>Como cambia la <strong class="em-blue">velocidad v(t)</strong> en su grafica.</li>
+    <li>Como la <strong class="em-blue">aceleracion a(t)</strong> es constante en este ejemplo.</li>
+    <li>Que ocurre cuando la <strong class="em-blue">velocidad es cero</strong>: el objeto se <strong class="em-blue">detiene un momento o cambia de direccion</strong>.</li>
+  </ul>
+
+  <div class="slider-container">
+    <label for="tRange"><strong class="em-blue">Tiempo t:</strong> </label>
+    <input type="range" id="tRange" min="-1" max="5" step="0.1" value="0" />
+    <span id="tValue"></span>
+  </div>
+
+  <div class="container">
+    <div class="panel">
+      <h2>Posicion P(t)</h2>
+      <p class="small">
+        Funcion de posicion del objeto: <strong class="em-blue">P(t) = t^2 - 4t</strong>.
+        La grafica es una curva (parabola).
+      </p>
+      <canvas id="positionCanvas" width="400" height="250"></canvas>
+      <div class="info-box">
+        <div><strong class="em-blue">P(t actual):</strong> <span id="pValue"></span></div>
+        <div class="small">
+          Cuando la velocidad se hace cero, en esta grafica aparece un punto minimo:
+          el objeto se detiene un instante antes de cambiar de direccion.
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Velocidad v(t)</h2>
+      <p class="small">
+        La velocidad es la derivada de la posicion. Para esta funcion:
+        <strong class="em-blue">v(t) = 2t - 4</strong>.
+        La grafica es una linea recta.
+      </p>
+      <canvas id="velocityCanvas" width="400" height="250"></canvas>
+      <div class="info-box">
+        <div><strong class="em-blue">v(t actual):</strong> <span id="vValue"></span></div>
+        <div id="zeroMessage" class="small"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Aceleracion a(t)</h2>
+      <p class="small">
+        La aceleracion es la derivada de la velocidad. En este caso:
+        <strong class="em-blue">a(t) = 2</strong>, es decir, es constante.
+        La grafica es una linea horizontal.
+      </p>
+      <canvas id="accelerationCanvas" width="400" height="250"></canvas>
+      <div class="info-box">
+        <div><strong class="em-blue">a(t actual):</strong> <span id="aValue"></span></div>
+        <div class="small">
+          Como la aceleracion no cambia con el tiempo, el objeto aumenta o disminuye su velocidad
+          siempre al mismo ritmo.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
+
+

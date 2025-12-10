@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Extremos de funciones – Intervalo interactivo</title>
+
+    <!-- Plotly para las gráficas -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f7;
+            color: #222;
+        }
+        header {
+            background: #1f2933;
+            color: white;
+            padding: 1rem 2rem;
+        }
+        main {
+            padding: 1.5rem 2rem 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 1.6rem;
+        }
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            margin-bottom: 1.5rem;
+        }
+        label {
+            font-weight: 600;
+        }
+        select, button, input[type="number"], input[type="text"] {
+            padding: 0.4rem 0.6rem;
+            border-radius: 0.4rem;
+            border: 1px solid #cbd2e1;
+            font-size: 0.95rem;
+        }
+        button {
+            cursor: pointer;
+            background: #2563eb;
+            color: white;
+            border: none;
+            margin-left: 0.5rem;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        .controls-row > div {
+            margin-right: 1rem;
+        }
+        #graph {
+            width: 100%;
+            height: 480px;
+        }
+        .badge {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 0.15rem 0.6rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-max {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        .badge-min {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .badge-abs {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .solution-text {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-top: 0.5rem;
+        }
+        .hint {
+            font-size: 0.85rem;
+            color: #555;
+            margin-top: 0.3rem;
+        }
+        @media (max-width: 700px) {
+            main {
+                padding: 1rem;
+            }
+            .controls-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            button {
+                margin-left: 0;
+            }
+        }
+        .error {
+            color: #b91c1c;
+            font-size: 0.85rem;
+            margin-top: 0.4rem;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Extremos de funciones – Intervalo interactivo</h1>
+</header>
+
+<main>
+    <div class="card">
+        <p>
+            Selecciona una función y elige un intervalo <strong>[a, b]</strong>. Después:
+        </p>
+        <ul>
+            <li>Identifica en la gráfica los <strong>máximos y mínimos relativos</strong> dentro del intervalo.</li>
+            <li>Determina los <strong>extremos absolutos</strong> en ese intervalo.</li>
+        </ul>
+        <p class="hint">
+            1) Elige la función (o escribe una personalizada).  
+            2) Indica el intervalo.  
+            3) Oprime <strong>“Graficar”</strong>.  
+            4) Si quieres ver los extremos marcados, usa <strong>“Mostrar solución (marcar extremos)”</strong>.
+        </p>
+    </div>
+
+    <div class="card">
+        <div class="controls-row">
+            <div>
+                <label for="func-select">Función:&nbsp;</label>
+                <select id="func-select">
+                    <option value="f1">1) f(x) = -x^3 + 3x</option>
+                    <option value="f2">2) f(x) = x^4 - 4x^2 + 1</option>
+                    <option value="f3">3) f(x) = sin(x)</option>
+                    <option value="f4">4) f(x) = x/(x^2 + 1)</option>
+                    <option value="f5">5) f(x) = x·e^{-x}</option>
+                    <option value="custom">6) Función personalizada (usar f(x) de abajo)</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="interval-a">a:</label>
+                <input id="interval-a" type="number" step="0.1">
+            </div>
+            <div>
+                <label for="interval-b">b:</label>
+                <input id="interval-b" type="number" step="0.1">
+            </div>
+
+
+        </div>
+        <div id="interval-error" class="error"></div>
+
+        <div style="margin-top: 1rem;">
+            <strong>Función seleccionada:</strong>
+            <span id="func-text"></span>
+            <div class="hint" id="interval-default-text"></div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+            <label for="custom-f">Función personalizada f(x) = </label>
+            <input id="custom-f" type="text" size="45"
+                   placeholder="Ejemplos: x**3 - 3*x**2, sin(x)+0.5*x^2, exp(-x)*x">
+            <div class="hint">
+                Escribe en términos de <strong>x</strong>. Sintaxis:
+                <ul>
+                    <li>Operadores: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>^</code> o <code>**</code>.</li>
+                    <li>Funciones: <code>sin(x)</code>, <code>cos(x)</code>, <code>tan(x)</code>,
+                        <code>exp(x)</code>, <code>ln(x)</code>, <code>sqrt(x)</code>.</li>
+                    <li>Constante: <code>pi</code> para π.</li>
+                    <li>Se acepta también <code>f(x) = ...</code> o <code>y = ...</code>.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+            <div>
+                <button id="btn-plot">Graficar</button>
+            </div>
+            <div>
+                <button id="btn-toggle-solution">
+                    Mostrar solución (marcar extremos)
+                </button>
+            </div>
+        </ul>
+		</ul>
+
+    <div class="card">
+        <div id="graph"></div>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-top:0;">Descripción de los extremos (según el intervalo elegido)</h2>
+        <div id="solution-description" class="solution-text">
+            (Primero grafica y luego, si deseas, activa “Mostrar solución”). 
+        </div>
+    </div>
+</main>
+
+<script>
+    // ***************** Definición de funciones predefinidas *****************
+    const funcs = {
+        f1: {
+            key: 'f1',
+            text: 'f(x) = -x^3 + 3x',
+            defaultInterval: [-3, 3],
+            f: x => -Math.pow(x, 3) + 3*x,
+            criticalPoints: [
+                { x: -1, type: 'min' },
+                { x:  1, type: 'max' }
+            ]
+        },
+        f2: {
+            key: 'f2',
+            text: 'f(x) = x^4 - 4x^2 + 1',
+            defaultInterval: [-3, 3],
+            f: x => Math.pow(x,4) - 4*Math.pow(x,2) + 1,
+            criticalPoints: [
+                { x: -Math.sqrt(2), type: 'max' },
+                { x:  0,             type: 'min' },
+                { x:  Math.sqrt(2),  type: 'max' }
+            ]
+        },
+        f3: {
+            key: 'f3',
+            text: 'f(x) = sin(x)',
+            defaultInterval: [-2*Math.PI, 2*Math.PI],
+            f: x => Math.sin(x),
+            criticalPoints: [
+                { x: -3*Math.PI/2, type: 'max' },
+                { x: -Math.PI/2,   type: 'min' },
+                { x:  Math.PI/2,   type: 'max' },
+                { x:  3*Math.PI/2, type: 'min' }
+            ]
+        },
+        f4: {
+            key: 'f4',
+            text: 'f(x) = x / (x^2 + 1)',
+            defaultInterval: [-4, 4],
+            f: x => x / (Math.pow(x,2) + 1),
+            criticalPoints: [
+                { x: -1, type: 'min' },
+                { x:  1, type: 'max' }
+            ]
+        },
+        f5: {
+            key: 'f5',
+            text: 'f(x) = x·e^{-x}',
+            defaultInterval: [0, 5],
+            f: x => x * Math.exp(-x),
+            criticalPoints: [
+                { x: 1, type: 'max' }
+            ]
+        }
+    };
+
+    const DEFAULT_CUSTOM_INTERVAL = [-5, 5];
+
+    let currentKey = 'f1';
+    let showSolution = false;
+
+    const funcSelect = document.getElementById('func-select');
+    const btnPlot = document.getElementById('btn-plot');
+    const btnToggleSolution = document.getElementById('btn-toggle-solution');
+    const funcTextSpan = document.getElementById('func-text');
+    const intervalDefaultText = document.getElementById('interval-default-text');
+    const solutionDesc = document.getElementById('solution-description');
+    const intervalError = document.getElementById('interval-error');
+    const inputA = document.getElementById('interval-a');
+    const inputB = document.getElementById('interval-b');
+    const customInput = document.getElementById('custom-f');
+
+    // ---------------- utilidades para personalizada ----------------
+    function prettyCustomExpr() {
+        let expr = customInput.value.trim();
+        expr = expr.replace(/^f\s*\(\s*x\s*\)\s*=/i, '');
+        expr = expr.replace(/^y\s*=/i, '');
+        return expr.trim();
+    }
+
+    function setDefaultsForCurrentFunction() {
+        if (currentKey === 'custom') {
+            const [a0, b0] = DEFAULT_CUSTOM_INTERVAL;
+            const txt = prettyCustomExpr() || '(expresión pendiente)';
+            funcTextSpan.textContent = 'Función personalizada: f(x) = ' + txt;
+            intervalDefaultText.textContent =
+                'Intervalo sugerido por defecto: [' +
+                a0.toFixed(2) + ', ' + b0.toFixed(2) + '].';
+            if (!inputA.value && !inputB.value) {
+                inputA.value = a0.toFixed(2);
+                inputB.value = b0.toFixed(2);
+            }
+        } else {
+            const fn = funcs[currentKey];
+            funcTextSpan.textContent = fn.text;
+            const [a0, b0] = fn.defaultInterval;
+            intervalDefaultText.textContent =
+                'Intervalo sugerido por defecto: [' +
+                a0.toFixed(2) + ', ' + b0.toFixed(2) + '].';
+            inputA.value = a0.toFixed(2);
+            inputB.value = b0.toFixed(2);
+        }
+    }
+
+    function getInterval(baseDefault) {
+        let a = parseFloat(inputA.value);
+        let b = parseFloat(inputB.value);
+
+        if (isNaN(a) || isNaN(b)) {
+            [a, b] = baseDefault;
+            inputA.value = a.toFixed(2);
+            inputB.value = b.toFixed(2);
+        }
+        if (a === b) {
+            b = a + 1;
+            inputB.value = b.toFixed(2);
+        }
+        if (a > b) {
+            const tmp = a;
+            a = b;
+            b = tmp;
+            inputA.value = a.toFixed(2);
+            inputB.value = b.toFixed(2);
+        }
+        return [a, b];
+    }
+
+    function buildCustomEvaluator(exprRaw) {
+        let expr = exprRaw.trim();
+        if (!expr) {
+            throw new Error('La función personalizada está vacía.');
+        }
+        expr = expr.replace(/^f\s*\(\s*x\s*\)\s*=/i, '');
+        expr = expr.replace(/^y\s*=/i, '');
+        expr = expr.replace(/\s+/g, '');
+        expr = expr.replace(/\^/g, '**');
+        expr = expr.replace(/sin\(/gi, 'Math.sin(');
+        expr = expr.replace(/cos\(/gi, 'Math.cos(');
+        expr = expr.replace(/tan\(/gi, 'Math.tan(');
+        expr = expr.replace(/exp\(/gi, 'Math.exp(');
+        expr = expr.replace(/ln\(/gi, 'Math.log(');
+        expr = expr.replace(/sqrt\(/gi, 'Math.sqrt(');
+        expr = expr.replace(/pi/gi, 'Math.PI');
+
+        const fn = function (x) {
+            return eval(expr);
+        };
+        try {
+            fn(0);
+        } catch (e) {
+            throw new Error('Error de sintaxis en la expresión. Revisa paréntesis y operadores.');
+        }
+        return fn;
+    }
+
+    // ---------------- descripción para funciones ----------------
+    function buildSolutionDescriptionPredef(fn, a, b, criticalInside, absMinList, absMaxList) {
+        let html = '';
+        html += '<strong>Función:</strong> ' + fn.text + '<br>';
+        html += '<strong>Intervalo elegido:</strong> [' + a.toFixed(2) + ', ' + b.toFixed(2) + ']<br><br>';
+
+        if (criticalInside.length === 0) {
+            html += 'No hay puntos críticos dentro del intervalo elegido.<br><br>';
+        } else {
+            html += 'Puntos críticos dentro del intervalo:<br><ul>';
+            criticalInside.forEach(p => {
+                const badgeClass = p.type === 'max' ? 'badge-max' : 'badge-min';
+                const label = p.type === 'max' ? 'máximo relativo' : 'mínimo relativo';
+                html += '<li>x = ' + p.x.toFixed(3) +
+                    ' ⇒ f(x) ≈ ' + p.y.toFixed(3) +
+                    ' (<span class="badge ' + badgeClass + '">' + label + '</span>)</li>';
+            });
+            html += '</ul><br>';
+        }
+
+        html += '<strong>Extremos absolutos en [' +
+                a.toFixed(2) + ', ' + b.toFixed(2) + ']:</strong><br>';
+
+        if (absMinList.length > 0) {
+            html += '<span class="badge badge-min">Mínimo absoluto</span><ul>';
+            absMinList.forEach(p => {
+                html += '<li>x = ' + p.x.toFixed(3) +
+                        ', f(x) ≈ ' + p.y.toFixed(3) + '</li>';
+            });
+            html += '</ul>';
+        }
+
+        if (absMaxList.length > 0) {
+            html += '<span class="badge badge-max">Máximo absoluto</span><ul>';
+            absMaxList.forEach(p => {
+                html += '<li>x = ' + p.x.toFixed(3) +
+                        ', f(x) ≈ ' + p.y.toFixed(3) + '</li>';
+            });
+            html += '</ul>';
+        }
+
+        return html;
+    }
+
+    function buildSolutionDescriptionCustom(a, b, absMinList, absMaxList, relMinList, relMaxList) {
+        let html = '';
+        const expr = prettyCustomExpr() || '(expresión no definida)';
+        html += '<strong>Función personalizada:</strong> f(x) = ' + expr + '<br>';
+        html += '<strong>Intervalo elegido:</strong> [' +
+                a.toFixed(2) + ', ' + b.toFixed(2) + ']<br><br>';
+        html += 'Los resultados son aproximados (a partir de la malla de puntos usada en la gráfica).<br><br>';
+
+        if (relMaxList.length || relMinList.length) {
+            html += '<strong>Extremos relativos aproximados:</strong><br>';
+            if (relMaxList.length) {
+                html += '<span class="badge badge-max">Máximos relativos aprox.</span><ul>';
+                relMaxList.forEach(p => {
+                    html += '<li>x ≈ ' + p.x.toFixed(3) +
+                            ', f(x) ≈ ' + p.y.toFixed(3) + '</li>';
+                });
+                html += '</ul>';
+            }
+            if (relMinList.length) {
+                html += '<span class="badge badge-min">Mínimos relativos aprox.</span><ul>';
+                relMinList.forEach(p => {
+                    html += '<li>x ≈ ' + p.x.toFixed(3) +
+                            ', f(x) ≈ ' + p.y.toFixed(3) + '</li>';
+                });
+                html += '</ul>';
+            }
+            html += '<br>';
+        }
+
+        html += '<strong>Extremos absolutos aproximados:</strong><br>';
+        if (absMinList.length) {
+            html += '<span class="badge badge-min">Mínimo absoluto aprox.</span><ul>';
+            absMinList.forEach(p => {
+                html += '<li>x ≈ ' + p.x.toFixed(3) +
+                        ', f(x) ≈ ' + p.y.toFixed(3) + '</li>';
+            });
+            html += '</ul>';
+        }
+        if (absMaxList.length) {
+            html += '<span class="badge badge-max">Máximo absoluto aprox.</span><ul>';
+            absMaxList.forEach(p => {
+                html += '<li>x ≈ ' + p.x.toFixed(3) +
+                        ', f(x) ≈ ' + p.y.toFixed(3) + '</li>';
+            });
+            html += '</ul>';
+        }
+
+        if (!absMinList.length && !absMaxList.length) {
+            html += 'No se pudieron estimar extremos (tal vez la función no es válida en este intervalo).';
+        }
+
+        html += '<br><span class="hint">Para un análisis riguroso se deben usar derivadas.</span>';
+
+        return html;
+    }
+
+    // ---------------- Graficar función actual ----------------
+    function plotCurrentFunction() {
+        intervalError.textContent = '';
+
+        const isCustom = (currentKey === 'custom');
+        let fn = null;
+        if (!isCustom) fn = funcs[currentKey];
+
+        const baseDefault = isCustom ? DEFAULT_CUSTOM_INTERVAL : fn.defaultInterval;
+        const [a, b] = getInterval(baseDefault);
+
+        let fEval;
+        if (isCustom) {
+            try {
+                fEval = buildCustomEvaluator(customInput.value);
+            } catch (e) {
+                intervalError.textContent = 'Error en función personalizada: ' + e.message;
+                solutionDesc.innerHTML =
+                    '(Corrige la función personalizada para poder mostrar la gráfica y la solución).';
+                Plotly.newPlot('graph', [], {title: ''});
+                return;
+            }
+        }
+
+        const N = 400;
+        const xs = [];
+        const ys = [];
+        for (let i = 0; i <= N; i++) {
+            const x = a + (b - a) * i / N;
+            xs.push(x);
+            let y;
+            try {
+                y = isCustom ? fEval(x) : fn.f(x);
+            } catch {
+                y = NaN;
+            }
+            ys.push(isFinite(y) ? y : null);
+        }
+
+        const eqText = isCustom
+            ? 'f(x) = ' + (prettyCustomExpr() || '(expresión no definida)')
+            : fn.text;
+
+        const traces = [
+            {
+                x: xs,
+                y: ys,
+                mode: 'lines',
+                name: eqText,
+                line: {width: 2}
+            }
+        ];
+
+        if (showSolution) {
+            if (!isCustom) {
+                // --- predefinidas: extremos exactos por puntos críticos conocidos ---
+                let criticalInside = [];
+                let absMinList = [];
+                let absMaxList = [];
+
+                const xsMax = [];
+                const ysMax = [];
+                const xsMin = [];
+                const ysMin = [];
+
+                fn.criticalPoints.forEach(p => {
+                    if (p.x >= a && p.x <= b) {
+                        const y = fn.f(p.x);
+                        criticalInside.push({ x: p.x, y: y, type: p.type });
+                        if (p.type === 'max') { xsMax.push(p.x); ysMax.push(y); }
+                        else { xsMin.push(p.x); ysMin.push(y); }
+                    }
+                });
+
+                if (xsMax.length) {
+                    traces.push({
+                        x: xsMax, y: ysMax,
+                        mode: 'markers', name: 'Máximos relativos',
+                        marker: {size: 10, symbol: 'circle-open', color: 'red'}
+                    });
+                }
+                if (xsMin.length) {
+                    traces.push({
+                        x: xsMin, y: ysMin,
+                        mode: 'markers', name: 'Mínimos relativos',
+                        marker: {size: 10, symbol: 'circle-open', color: 'blue'}
+                    });
+                }
+
+                const candidates = [];
+                candidates.push({ x: a, y: fn.f(a) });
+                candidates.push({ x: b, y: fn.f(b) });
+                criticalInside.forEach(p => candidates.push({ x: p.x, y: p.y }));
+
+                let yMin = Infinity, yMax = -Infinity;
+                candidates.forEach(p => {
+                    if (p.y < yMin) yMin = p.y;
+                    if (p.y > yMax) yMax = p.y;
+                });
+
+                const eps = 1e-6;
+                candidates.forEach(p => {
+                    if (Math.abs(p.y - yMin) <= eps) absMinList.push(p);
+                    if (Math.abs(p.y - yMax) <= eps) absMaxList.push(p);
+                });
+
+                const xsAbs = absMinList.concat(absMaxList).map(p => p.x);
+                const ysAbs = absMinList.concat(absMaxList).map(p => p.y);
+                traces.push({
+                    x: xsAbs, y: ysAbs,
+                    mode: 'markers', name: 'Extremos absolutos',
+                    marker: {size: 11, symbol: 'diamond', color: 'green'}
+                });
+
+                solutionDesc.innerHTML = buildSolutionDescriptionPredef(
+                    fn, a, b, criticalInside, absMinList, absMaxList
+                );
+            } else {
+                // --- personalizada: extremos relativos + absolutos aproximados ---
+                const relMaxList = [];
+                const relMinList = [];
+
+                for (let i = 1; i < N; i++) {
+                    const y0 = ys[i - 1];
+                    const y1 = ys[i];
+                    const y2 = ys[i + 1];
+                    if (y0 === null || y1 === null || y2 === null) continue;
+
+                    if (y1 > y0 && y1 > y2) {
+                        relMaxList.push({ x: xs[i], y: y1 });
+                    } else if (y1 < y0 && y1 < y2) {
+                        relMinList.push({ x: xs[i], y: y1 });
+                    }
+                }
+
+                const xsRelMax = relMaxList.map(p => p.x);
+                const ysRelMax = relMaxList.map(p => p.y);
+                const xsRelMin = relMinList.map(p => p.x);
+                const ysRelMin = relMinList.map(p => p.y);
+
+                if (xsRelMax.length) {
+                    traces.push({
+                        x: xsRelMax, y: ysRelMax,
+                        mode: 'markers', name: 'Máximos relativos aprox.',
+                        marker: {size: 9, symbol: 'circle-open', color: 'red'}
+                    });
+                }
+                if (xsRelMin.length) {
+                    traces.push({
+                        x: xsRelMin, y: ysRelMin,
+                        mode: 'markers', name: 'Mínimos relativos aprox.',
+                        marker: {size: 9, symbol: 'circle-open', color: 'blue'}
+                    });
+                }
+
+                let yMin = Infinity, yMax = -Infinity;
+                let idxMin = [], idxMax = [];
+
+                for (let i = 0; i <= N; i++) {
+                    const y = ys[i];
+                    if (y === null || !isFinite(y)) continue;
+                    if (y < yMin - 1e-9) { yMin = y; idxMin = [i]; }
+                    else if (Math.abs(y - yMin) <= 1e-6) idxMin.push(i);
+                    if (y > yMax + 1e-9) { yMax = y; idxMax = [i]; }
+                    else if (Math.abs(y - yMax) <= 1e-6) idxMax.push(i);
+                }
+
+                const absMinList = idxMin.map(i => ({ x: xs[i], y: ys[i] }));
+                const absMaxList = idxMax.map(i => ({ x: xs[i], y: ys[i] }));
+
+                const xsAbs = absMinList.concat(absMaxList).map(p => p.x);
+                const ysAbs = absMinList.concat(absMaxList).map(p => p.y);
+
+                traces.push({
+                    x: xsAbs, y: ysAbs,
+                    mode: 'markers', name: 'Extremos absolutos aprox.',
+                    marker: {size: 11, symbol: 'diamond', color: 'green'}
+                });
+
+                solutionDesc.innerHTML = buildSolutionDescriptionCustom(
+                    a, b, absMinList, absMaxList, relMinList, relMaxList
+                );
+            }
+        } else {
+            solutionDesc.innerHTML =
+                '(Primero grafica y luego, si deseas, activa “Mostrar solución”).';
+        }
+
+        const layout = {
+            title: eqText,        // <<< título con la ecuación que se está viendo
+            xaxis: {title: 'x', zeroline: true},
+            yaxis: {title: 'f(x)', zeroline: true},
+            margin: {l: 60, r: 20, t: 40, b: 60}
+        };
+
+        Plotly.newPlot('graph', traces, layout, {responsive: true});
+    }
+
+    // ---------------- Eventos ----------------
+    funcSelect.addEventListener('change', () => {
+        currentKey = funcSelect.value;
+        setDefaultsForCurrentFunction();
+        // ya no graficamos aquí: solo al presionar "Graficar"
+    });
+
+    btnPlot.addEventListener('click', () => {
+        plotCurrentFunction();
+    });
+
+    btnToggleSolution.addEventListener('click', () => {
+        showSolution = !showSolution;
+        btnToggleSolution.textContent = showSolution
+            ? 'Ocultar solución (quitar marcas)'
+            : 'Mostrar solución (marcar extremos)';
+        // si ya había una gráfica, se actualiza; si no, no hace nada visible hasta que se grafique
+        plotCurrentFunction();
+    });
+
+    customInput.addEventListener('input', () => {
+        if (currentKey === 'custom') {
+            setDefaultsForCurrentFunction();
+        }
+    });
+
+    // Al cargar, solo mostramos texto y un plano vacío
+    document.addEventListener('DOMContentLoaded', () => {
+        setDefaultsForCurrentFunction();
+        Plotly.newPlot('graph', [], {
+            title: 'Pulsa "Graficar" para ver la función',
+            xaxis: {title: 'x', zeroline: true},
+            yaxis: {title: 'f(x)', zeroline: true},
+            margin: {l: 60, r: 20, t: 40, b: 60}
+        });
+    });
+</script>
+
+</body>
+</html>

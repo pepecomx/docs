@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Aplicación de Derivadas: Posición, Velocidad y Aceleración</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.5;
+    }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 5px;
+    }
+    h2 {
+      font-size: 18px;
+      margin-top: 20px;
+      margin-bottom: 5px;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 10px;
+    }
+    .panel {
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 6px;
+      flex: 1 1 380px;
+      max-width: 450px;
+    }
+    canvas {
+      border: 1px solid #eee;
+      margin-top: 10px;
+      background-color: #fafafa;
+    }
+    .slider-container {
+      margin-top: 15px;
+      margin-bottom: 10px;
+    }
+    .info-box {
+      font-size: 14px;
+      background-color: #f5f5f5;
+      padding: 8px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+    .highlight {
+      font-weight: bold;
+      color: #b22222;
+    }
+    .small {
+      font-size: 13px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Razón de Cambio: Posición, Velocidad y Aceleración</h1>
+  <p>
+    En física, la <strong>derivada de la posición con respecto al tiempo</strong> es la
+    <strong>velocidad</strong>, y la <strong>derivada de la velocidad</strong> es la
+    <strong>aceleración</strong>.
+  </p>
+  <p>
+    En este ejemplo trabajamos con la función de posición:
+    <strong>P(t) = t² − 4t</strong>.
+    Su derivada es la velocidad, y la derivada de la velocidad es la aceleración.
+  </p>
+
+  <h2>Interacción</h2>
+  <p>
+    Mueve el control deslizante para elegir un instante de tiempo <strong>t</strong>.
+    Observa:
+  </p>
+  <ul>
+    <li>Cómo cambia la altura del punto en la gráfica de posición P(t).</li>
+    <li>Cómo cambia la velocidad v(t) en su gráfica.</li>
+    <li>Cómo la aceleración a(t) es constante en este ejemplo.</li>
+    <li>Qué ocurre cuando la velocidad es cero: el objeto se detiene un momento o cambia de dirección.</li>
+  </ul>
+
+  <div class="slider-container">
+    <label for="tRange"><strong>Tiempo t:</strong> </label>
+    <input type="range" id="tRange" min="-1" max="5" step="0.1" value="0" />
+    <span id="tValue"></span>
+  </div>
+
+  <div class="container">
+    <div class="panel">
+      <h2>Posición P(t)</h2>
+      <p class="small">
+        Función de posición del objeto: <strong>P(t) = t² − 4t</strong>.
+        La gráfica es una curva (parábola).
+      </p>
+      <canvas id="positionCanvas" width="400" height="250"></canvas>
+      <div class="info-box">
+        <div><strong>P(t actual):</strong> <span id="pValue"></span></div>
+        <div class="small">
+          Cuando la velocidad se hace cero, en esta gráfica aparece un punto mínimo:
+          el objeto se detiene un instante antes de cambiar de dirección.
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Velocidad v(t)</h2>
+      <p class="small">
+        La velocidad es la derivada de la posición. Para esta función:
+        <strong>v(t) = 2t − 4</strong>.
+        La gráfica es una línea recta.
+      </p>
+      <canvas id="velocityCanvas" width="400" height="250"></canvas>
+      <div class="info-box">
+        <div><strong>v(t actual):</strong> <span id="vValue"></span></div>
+        <div id="zeroMessage" class="small"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Aceleración a(t)</h2>
+      <p class="small">
+        La aceleración es la derivada de la velocidad. En este caso:
+        <strong>a(t) = 2</strong>, es decir, es constante.
+        La gráfica es una línea horizontal.
+      </p>
+      <canvas id="accelerationCanvas" width="400" height="250"></canvas>
+      <div class="info-box">
+        <div><strong>a(t actual):</strong> <span id="aValue"></span></div>
+        <div class="small">
+          Como la aceleración no cambia con el tiempo, el objeto aumenta o disminuye su velocidad
+          siempre al mismo ritmo.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="vel_y_aceleracion.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Optimización económica: ingresos, costos y utilidad</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.5;
+    }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+    h2 {
+      font-size: 18px;
+      margin-top: 18px;
+      margin-bottom: 6px;
+    }
+    .panel {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+      background-color: #fafafa;
+    }
+    label {
+      font-size: 14px;
+    }
+    input[type="number"] {
+      padding: 4px 6px;
+      font-size: 14px;
+      width: 90px;
+      margin-right: 8px;
+    }
+    input[type="range"] {
+      width: 260px;
+      margin-top: 4px;
+    }
+    .row {
+      margin-top: 6px;
+      margin-bottom: 4px;
+    }
+    .values {
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    .values span {
+      display: inline-block;
+      min-width: 170px;
+    }
+    canvas {
+      border: 1px solid #eee;
+      background-color: #ffffff;
+      margin-top: 10px;
+    }
+    .small {
+      font-size: 13px;
+      color: #555;
+    }
+    .highlight {
+      font-weight: bold;
+      color: #b22222;
+    }
+  </style>
+</head>
+<body>
+  <h1>Optimización económica: utilidad en función de la producción</h1>
+
+  <p>
+    Modelo general:
+  </p>
+  <ul>
+    <li>Precio por unidad: <code>p</code></li>
+    <li>Costo total: <code>C(x) = C_f + C_v · x</code></li>
+    <li>Ingreso total: <code>I(x) = p · x</code></li>
+    <li>Utilidad: <code>U(x) = I(x) − C(x)</code></li>
+  </ul>
+  <p class="small">
+    Donde <strong>C<sub>f</sub></strong> es el costo fijo (no depende de cuántas unidades se producen) y
+    <strong>C<sub>v</sub></strong> es el costo variable por unidad.
+  </p>
+
+  <!-- Panel de parámetros -->
+  <div class="panel">
+    <h2>1. Parámetros del problema</h2>
+
+    <div class="row">
+      <label for="precioInput">Precio por unidad (p):</label>
+      <input type="number" id="precioInput" value="80" step="1" />
+    </div>
+
+    <div class="row">
+      <label for="costoFijoInput">Costo fijo (C_f):</label>
+      <input type="number" id="costoFijoInput" value="1000" step="50" />
+    </div>
+
+    <div class="row">
+      <label for="costoVarInput">Costo variable por unidad (C_v):</label>
+      <input type="number" id="costoVarInput" value="20" step="1" />
+    </div>
+
+    <div class="row">
+      <label for="capacidadInput">Capacidad máxima de producción (x máx):</label>
+      <input type="number" id="capacidadInput" value="50" step="1" min="1" />
+    </div>
+
+    <p class="small">
+      Interprete los parámetros como una empresa real: el costo fijo puede ser renta, sueldos administrativos,
+      servicios básicos, etc.; el costo variable puede ser materia prima, mano de obra directa, empaque, etc.
+    </p>
+  </div>
+
+  <!-- Panel de producción actual -->
+  <div class="panel">
+    <h2>2. Producción actual y valores económicos</h2>
+
+    <div class="row">
+      <label for="xRange"><strong>Producción x (unidades):</strong></label><br />
+      <input type="range" id="xRange" min="0" max="50" step="1" value="10" />
+      <span id="xValue"></span> unidades
+    </div>
+
+    <div class="values">
+      <span>Ingreso I(x): <strong><span id="ingresoValue"></span> pesos</strong></span>
+      <span>Costo C(x): <strong><span id="costoValue"></span> pesos</strong></span>
+    </div>
+    <div class="values">
+      <span>Utilidad U(x): <strong><span id="utilidadValue"></span> pesos</strong></span>
+      <span>Margen por unidad: <strong><span id="margenValue"></span> pesos/unidad</strong></span>
+    </div>
+
+    <div class="values small">
+      <div>Producción “óptima” dentro de la capacidad (según el modelo lineal):</div>
+      <span>x<sub>opt</sub> = <strong><span id="xOptValue"></span> unidades</strong></span>
+      <span>U(x<sub>opt</sub>) = <strong><span id="uOptValue"></span> pesos</strong></span>
+      <div id="interpretacionOpt" class="small" style="margin-top:4px;"></div>
+    </div>
+  </div>
+
+  <!-- Panel de gráfica -->
+  <div class="panel">
+    <h2>3. Gráfica de ingresos, costos y utilidad</h2>
+    <p class="small">
+      Se grafican:
+      <br>• Ingreso total I(x) (línea azul)
+      <br>• Costo total C(x) (línea naranja)
+      <br>• Utilidad U(x) (línea verde)
+      <br>El punto rojo corresponde a la producción actual x, y el punto morado al valor “óptimo” dentro de la capacidad.
+    </p>
+    <canvas id="econCanvas" width="600" height="360"></canvas>
+  </div>
+
+  <script>
+    const precioInput = document.getElementById('precioInput');
+    const costoFijoInput = document.getElementById('costoFijoInput');
+    const costoVarInput  = document.getElementById('costoVarInput');
+    const capacidadInput = document.getElementById('capacidadInput');
+
+    const xRange   = document.getElementById('xRange');
+    const xValue   = document.getElementById('xValue');
+    const ingresoValue  = document.getElementById('ingresoValue');
+    const costoValue    = document.getElementById('costoValue');
+    const utilidadValue = document.getElementById('utilidadValue');
+    const margenValue   = document.getElementById('margenValue');
+    const xOptValue     = document.getElementById('xOptValue');
+    const uOptValue     = document.getElementById('uOptValue');
+    const interpretacionOpt = document.getElementById('interpretacionOpt');
+
+    const econCanvas = document.getElementById('econCanvas');
+    const econCtx    = econCanvas.getContext('2d');
+
+    function ingreso(x, p) {
+      return p * x;
+    }
+
+    function costo(x, cf, cv) {
+      return cf + cv * x;
+    }
+
+    function utilidad(x, p, cf, cv) {
+      return ingreso(x, p) - costo(x, cf, cv);
+    }
+
+    function actualizar() {
+      const p  = parseFloat(precioInput.value);
+      const cf = parseFloat(costoFijoInput.value);
+      const cv = parseFloat(costoVarInput.value);
+      let xmax = parseFloat(capacidadInput.value);
+
+      if (xmax <= 0 || isNaN(xmax)) {
+        xmax = 1;
+        capacidadInput.value = 1;
+      }
+
+      // Actualizar rango del slider
+      xRange.max = xmax.toString();
+      if (parseFloat(xRange.value) > xmax) {
+        xRange.value = xmax;
+      }
+
+      const x = parseFloat(xRange.value);
+
+      const I = ingreso(x, p);
+      const C = costo(x, cf, cv);
+      const U = utilidad(x, p, cf, cv);
+      const margen = p - cv;
+
+      xValue.textContent       = x.toFixed(0);
+      ingresoValue.textContent = I.toFixed(2);
+      costoValue.textContent   = C.toFixed(2);
+      utilidadValue.textContent= U.toFixed(2);
+      margenValue.textContent  = margen.toFixed(2);
+
+      // Punto "óptimo" en el modelo lineal
+      let xOpt;
+      let Uopt;
+      let interpretacion;
+
+      if (margen > 0) {
+        xOpt = xmax;
+        Uopt = utilidad(xOpt, p, cf, cv);
+        interpretacion =
+          'Como el margen por unidad es positivo, la utilidad crece con x. ' +
+          'Dentro de la capacidad, conviene producir el máximo posible.';
+      } else if (margen < 0) {
+        xOpt = 0;
+        Uopt = utilidad(xOpt, p, cf, cv);
+        interpretacion =
+          'El margen por unidad es negativo: cada unidad adicional hace perder dinero. ' +
+          'En este modelo, lo “mejor” sería no producir (x = 0).';
+      } else {
+        xOpt = 0;
+        Uopt = utilidad(xOpt, p, cf, cv);
+        interpretacion =
+          'El margen por unidad es cero: la utilidad no cambia con x. ' +
+          'Cualquier nivel de producción dentro de la capacidad da la misma utilidad.';
+      }
+
+      xOptValue.textContent = xOpt.toFixed(0);
+      uOptValue.textContent = Uopt.toFixed(2);
+      interpretacionOpt.textContent = interpretacion;
+
+      dibujarGrafica(p, cf, cv, xmax, x, xOpt);
+    }
+
+    function dibujarGrafica(p, cf, cv, xmax, xActual, xOpt) {
+      const ctx = econCtx;
+      const canvas = econCanvas;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const w = canvas.width;
+      const h = canvas.height;
+
+      const pasos = 200;
+      const xs = [];
+      const Is = [];
+      const Cs = [];
+      const Us = [];
+
+      let yMin = Infinity;
+      let yMax = -Infinity;
+
+      for (let i = 0; i <= pasos; i++) {
+        const x = (xmax * i) / pasos;
+        const I = ingreso(x, p);
+        const C = costo(x, cf, cv);
+        const U = utilidad(x, p, cf, cv);
+
+        xs.push(x);
+        Is.push(I);
+        Cs.push(C);
+        Us.push(U);
+
+        if (I < yMin) yMin = I;
+        if (C < yMin) yMin = C;
+        if (U < yMin) yMin = U;
+        if (I > yMax) yMax = I;
+        if (C > yMax) yMax = C;
+        if (U > yMax) yMax = U;
+      }
+
+      if (!isFinite(yMin) || !isFinite(yMax)) {
+        yMin = -1;
+        yMax = 1;
+      }
+
+      if (yMin === yMax) {
+        yMin -= 1;
+        yMax += 1;
+      } else {
+        const padding = 0.1 * (yMax - yMin);
+        yMin -= padding;
+        yMax += padding;
+      }
+
+      const xMin = 0;
+
+      function toCanvasX(x) {
+        return 40 + (x - xMin) / (xmax - xMin) * (w - 70);
+      }
+      function toCanvasY(y) {
+        return h - 40 - (y - yMin) / (yMax - yMin) * (h - 70);
+      }
+
+      // Ejes
+      ctx.strokeStyle = '#cccccc';
+      ctx.lineWidth = 1;
+
+      // Eje X (y = 0) si está en rango
+      if (yMin < 0 && yMax > 0) {
+        const y0 = toCanvasY(0);
+        ctx.beginPath();
+        ctx.moveTo(toCanvasX(xMin), y0);
+        ctx.lineTo(toCanvasX(xmax), y0);
+        ctx.stroke();
+      }
+
+      // Eje Y (x = 0)
+      const x0 = toCanvasX(0);
+      ctx.beginPath();
+      ctx.moveTo(x0, toCanvasY(yMin));
+      ctx.lineTo(x0, toCanvasY(yMax));
+      ctx.stroke();
+
+      // Curva de Ingreso (azul)
+      ctx.strokeStyle = '#1565c0';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i <= pasos; i++) {
+        const cx = toCanvasX(xs[i]);
+        const cy = toCanvasY(Is[i]);
+        if (i === 0) ctx.moveTo(cx, cy);
+        else ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+
+      // Curva de Costo (naranja)
+      ctx.strokeStyle = '#ef6c00';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i <= pasos; i++) {
+        const cx = toCanvasX(xs[i]);
+        const cy = toCanvasY(Cs[i]);
+        if (i === 0) ctx.moveTo(cx, cy);
+        else ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+
+      // Curva de Utilidad (verde)
+      ctx.strokeStyle = '#2e7d32';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i <= pasos; i++) {
+        const cx = toCanvasX(xs[i]);
+        const cy = toCanvasY(Us[i]);
+        if (i === 0) ctx.moveTo(cx, cy);
+        else ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+
+      // Punto actual (rojo) en la curva de utilidad
+      const Uactual = utilidad(xActual, p, cf, cv);
+      ctx.fillStyle = '#d32f2f';
+      ctx.beginPath();
+      ctx.arc(toCanvasX(xActual), toCanvasY(Uactual), 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Punto óptimo (morado) en la curva de utilidad
+      const Uopt = utilidad(xOpt, p, cf, cv);
+      ctx.fillStyle = '#7b1fa2';
+      ctx.beginPath();
+      ctx.arc(toCanvasX(xOpt), toCanvasY(Uopt), 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Etiquetas simples
+      ctx.fillStyle = '#000000';
+      ctx.font = '13px Arial';
+      ctx.fillText('Producción x', w - 90, h - 15);
+      ctx.save();
+      ctx.translate(15, 40);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('Pesos', 0, 0);
+      ctx.restore();
+
+      // Leyenda sencilla
+      ctx.font = '12px Arial';
+      ctx.fillStyle = '#1565c0';
+      ctx.fillText('Ingreso I(x)', 50, 20);
+      ctx.fillStyle = '#ef6c00';
+      ctx.fillText('Costo C(x)', 150, 20);
+      ctx.fillStyle = '#2e7d32';
+      ctx.fillText('Utilidad U(x)', 250, 20);
+    }
+
+    precioInput.addEventListener('input', actualizar);
+    costoFijoInput.addEventListener('input', actualizar);
+    costoVarInput.addEventListener('input', actualizar);
+    capacidadInput.addEventListener('input', actualizar);
+    xRange.addEventListener('input', actualizar);
+
+    // Inicializar
+    actualizar();
+  </script>
+</body>
+</html>

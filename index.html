@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebMateTec - Herramientas Educativas de Matemáticas</title>
+
+
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f7;
+            color: #222;
+        }
+        header {
+            background: #1f2933;
+            color: white;
+            padding: 1.5rem 2rem;
+            text-align: center;
+        }
+        main {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 2rem;
+        }
+        .subject-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.07);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+        }
+        .card-content {
+            padding: 1.5rem;
+        }
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.4rem;
+            color: #1d4ed8;
+        }
+        .card p {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #444;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>WebMateTec</h1>
+        <p>Herramientas Interactivas para Matemáticas</p>
+    </header>
+
+    <main>
+        <div class="subject-grid">
+            <a href="calculo_diferencial/index.html" class="card">
+                <div class="card-content">
+                    <h2>Cálculo Diferencial</h2>
+                    <p>Explora conceptos como límites, derivadas, y la optimización de funciones a través de visualizaciones interactivas.</p>
+                </div>
+            </a>
+
+            <a href="probabilidad_estadistica/index.html" class="card">
+                <div class="card-content">
+                    <h2>Probabilidad y Estadística</h2>
+                    <p>Analiza distribuciones de probabilidad, realiza pruebas de hipótesis y visualiza datos estadísticos de forma dinámica.</p>
+                </div>
+            </a>
+
+            <a href="investigacion_operaciones/index.html" class="card">
+                <div class="card-content">
+                    <h2>Investigación de Operaciones</h2>
+                    <p>Resuelve problemas de optimización, modelos de colas y programación lineal con herramientas prácticas.</p>
+                </div>
+            </a>
+        </div>
+    </main>
+
+</body>
+</html>

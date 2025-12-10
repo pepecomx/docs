@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Posición, Velocidad y Aceleración – Ejemplos interactivos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.5;
+    }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 5px;
+    }
+    h2 {
+      font-size: 18px;
+      margin-top: 20px;
+      margin-bottom: 5px;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 10px;
+    }
+    .panel {
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 6px;
+      flex: 1 1 380px;
+      max-width: 450px;
+    }
+    canvas {
+      border: 1px solid #eee;
+      margin-top: 10px;
+      background-color: #fafafa;
+    }
+    .slider-container {
+      margin-top: 15px;
+      margin-bottom: 10px;
+    }
+    .info-box {
+      font-size: 14px;
+      background-color: #f5f5f5;
+      padding: 8px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+    .highlight {
+      font-weight: bold;
+      color: #b22222;
+    }
+    .small {
+      font-size: 13px;
+      color: #555;
+    }
+    .controls {
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      background-color: #fafafa;
+    }
+    label {
+      font-size: 14px;
+    }
+    select, input[type="text"], button {
+      margin-top: 5px;
+      margin-bottom: 5px;
+      padding: 4px 6px;
+      font-size: 14px;
+    }
+    button {
+      cursor: pointer;
+    }
+    #errorBox {
+      color: #b22222;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Razón de cambio: Posición, Velocidad y Aceleración</h1>
+  <p>
+    En física, la <strong>derivada de la posición</strong> con respecto al tiempo es la
+    <strong>velocidad</strong>, y la <strong>derivada de la velocidad</strong> es la
+    <strong>aceleración</strong>.
+  </p>
+  <p>
+    Aquí puedes explorar varios ejemplos de funciones de posición \(P(t)\) y también
+    ingresar tu propia función para ver cómo cambian la velocidad y la aceleración.
+  </p>
+
+  <div class="controls">
+    <h2>1. Elegir ejemplo o escribir tu propia función</h2>
+    <label for="exampleSelect"><strong>Ejemplos de posición P(t):</strong></label><br />
+    <select id="exampleSelect">
+      <option value="parabola">Ejemplo 1: P(t) = t*t - 4*t (parábola)</option>
+      <option value="cubic">Ejemplo 2: P(t) = t*t*t - 3*t (cúbica)</option>
+      <option value="sine">Ejemplo 3: P(t) = sin(t) (oscilación)</option>
+      <option value="cosine">Ejemplo 4: P(t) = cos(t) (oscilación)</option>
+      <option value="exp">Ejemplo 5: P(t) = exp(0.5*t) (crecimiento rápido)</option>
+      <option value="log">Ejemplo 6: P(t) = log(t + 2) (crecimiento lento)</option>
+      <option value="custom">Función personalizada</option>
+    </select>
+    <br />
+
+    <label for="exprInput">
+      <strong>Función de posición P(t) en JavaScript:</strong><br />
+      (ejemplos: <code>t*t - 4*t</code>, <code>sin(t)</code>, <code>exp(-t)*sin(t)</code>)
+    </label><br />
+    <input type="text" id="exprInput" size="50" />
+    <button id="applyBtn">Aplicar función</button>
+    <div id="errorBox"></div>
+    <div class="small">
+      Puedes usar funciones: <code>sin</code>, <code>cos</code>, <code>tan</code>,
+      <code>exp</code>, <code>log</code>, <code>sqrt</code>, <code>abs</code>.<br />
+      Ejemplo personalizado: <code>exp(-0.5*t)*sin(t)</code>
+    </div>
+
+    <div class="info-box">
+      <strong>Función actual:</strong> <span id="currentExprText"></span><br />
+      <span id="exampleDescription" class="small"></span>
+    </div>
+  </div>
+
+  <h2>2. Mover el tiempo y observar las gráficas</h2>
+  <p>
+    Mueve el control deslizante para elegir un instante de tiempo <strong>t</strong>.
+    Observa cómo cambian:
+  </p>
+  <ul>
+    <li>La altura del punto en la gráfica de posición P(t).</li>
+    <li>La velocidad v(t), aproximada como derivada de P(t).</li>
+    <li>La aceleración a(t), aproximada como derivada de la velocidad.</li>
+  </ul>
+
+  <div class="slider-container">
+    <label for="tRange"><strong>Tiempo t:</strong> </label>
+    <input type="range" id="tRange" min="-1" max="5" step="0.1" value="0" />
+    <span id="tValue"></span>
+  </div>
+
+  <div class="container">
+    <div class="panel">
+      <h2>Posición P(t)</h2>
+      <canvas id="positionCanvas" width="400" height="250"></canvas>
+      <div class="info-box">
+        <div><strong>P(t actual):</strong> <span id="pValue"></span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Velocidad v(t)</h2>
+      <canvas id="velocityCanvas" width="400" height="250"></canvas>
+      <div class="info-box">
+        <div><strong>v(t actual):</strong> <span id="vValue"></span></div>
+        <div id="zeroMessage" class="small"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Aceleración a(t)</h2>
+      <canvas id="accelerationCanvas" width="400" height="250"></canvas>
+      <div class="info-box">
+        <div><strong>a(t actual):</strong> <span id="aValue"></span></div>
+        <div class="small">
+          Si la aceleración es constante, la velocidad cambia siempre al mismo ritmo.
+          Si varía, el movimiento es más complejo.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Rango de tiempo
+    const tMin = -1;
+    const tMax = 5;
+
+    const tRange = document.getElementById('tRange');
+    const tValue = document.getElementById('tValue');
+    const pValue = document.getElementById('pValue');
+    const vValue = document.getElementById('vValue');
+    const aValue = document.getElementById('aValue');
+    const zeroMessage = document.getElementById('zeroMessage');
+
+    const posCanvas = document.getElementById('positionCanvas');
+    const velCanvas = document.getElementById('velocityCanvas');
+    const accCanvas = document.getElementById('accelerationCanvas');
+
+    const posCtx = posCanvas.getContext('2d');
+    const velCtx = velCanvas.getContext('2d');
+    const accCtx = accCanvas.getContext('2d');
+
+    const exampleSelect = document.getElementById('exampleSelect');
+    const exprInput = document.getElementById('exprInput');
+    const applyBtn = document.getElementById('applyBtn');
+    const errorBox = document.getElementById('errorBox');
+    const currentExprText = document.getElementById('currentExprText');
+    const exampleDescription = document.getElementById('exampleDescription');
+
+    let fPos = null; // función P(t)
+    let fVel = null; // derivada numérica (velocidad)
+    let fAcc = null; // segunda derivada numérica (aceleración)
+
+    // Paso para derivada numérica
+    const H = 0.001;
+
+    function preprocessExpression(expr) {
+      // Reemplazar notación "matemática" por Math.*
+      return expr
+        .replace(/sin\(/g, 'Math.sin(')
+        .replace(/cos\(/g, 'Math.cos(')
+        .replace(/tan\(/g, 'Math.tan(')
+        .replace(/exp\(/g, 'Math.exp(')
+        .replace(/log\(/g, 'Math.log(')
+        .replace(/sqrt\(/g, 'Math.sqrt(')
+        .replace(/abs\(/g, 'Math.abs(');
+    }
+
+    function compileExpression(expr) {
+      const body = 'return ' + preprocessExpression(expr) + ';';
+      return new Function('t', body);
+    }
+
+    function setExample(exampleKey) {
+      let expr = '';
+      let desc = '';
+      switch (exampleKey) {
+        case 'parabola':
+          expr = 't*t - 4*t';
+          desc = 'Parábola: movimiento con cambio de dirección y punto mínimo.';
+          break;
+        case 'cubic':
+          expr = 't*t*t - 3*t';
+          desc = 'Función cúbica: puede tener cambios de concavidad y varios comportamientos.';
+          break;
+        case 'sine':
+          expr = 'sin(t)';
+          desc = 'Movimiento oscilatorio, como un péndulo aproximado.';
+          break;
+        case 'cosine':
+          expr = 'cos(t)';
+          desc = 'Movimiento oscilatorio desfasado respecto a sin(t).';
+          break;
+        case 'exp':
+          expr = 'exp(0.5*t)';
+          desc = 'Crecimiento acelerado, útil para modelar ciertos procesos.';
+          break;
+        case 'log':
+          expr = 'log(t + 2)';
+          desc = 'Crecimiento lento, definido aquí para t > -2.';
+          break;
+        case 'custom':
+          desc = 'Escribe tu propia función P(t) y haz clic en "Aplicar función".';
+          break;
+      }
+      if (exampleKey !== 'custom') {
+        exprInput.value = expr;
+      }
+      exampleDescription.textContent = desc;
+    }
+
+    function buildDerivatives() {
+      if (!fPos) return;
+      fVel = function (t) {
+        return (fPos(t + H) - fPos(t - H)) / (2 * H);
+      };
+      fAcc = function (t) {
+        return (fPos(t + H) - 2 * fPos(t) + fPos(t - H)) / (H * H);
+      };
+    }
+
+    function applyExpression() {
+      const expr = exprInput.value.trim();
+      if (!expr) {
+        errorBox.textContent = 'Por favor, escribe una función para P(t).';
+        return;
+      }
+      try {
+        const testF = compileExpression(expr);
+        // Probar con un valor para detectar errores básicos
+        const testVal = testF(0);
+        if (!isFinite(testVal)) {
+          // No es estrictamente un error, pero puede ser raro
+        }
+        fPos = testF;
+        buildDerivatives();
+        errorBox.textContent = '';
+        currentExprText.textContent = 'P(t) = ' + expr;
+        update();
+      } catch (e) {
+        console.error(e);
+        errorBox.textContent = 'Error en la expresión. Revisa la sintaxis.';
+      }
+    }
+
+    function computeRange(func) {
+      let yMin = Infinity;
+      let yMax = -Infinity;
+      const steps = 300;
+      for (let i = 0; i <= steps; i++) {
+        const t = tMin + (i / steps) * (tMax - tMin);
+        let y;
+        try {
+          y = func(t);
+        } catch (e) {
+          continue;
+        }
+        if (!isFinite(y)) continue;
+        if (y < yMin) yMin = y;
+        if (y > yMax) yMax = y;
+      }
+      if (!isFinite(yMin) || !isFinite(yMax)) {
+        yMin = -1;
+        yMax = 1;
+      }
+      if (yMin === yMax) {
+        yMin -= 1;
+        yMax += 1;
+      } else {
+        const padding = 0.1 * (yMax - yMin);
+        yMin -= padding;
+        yMax += padding;
+      }
+      return { yMin, yMax };
+    }
+
+    function toCanvasCoords(t, y, canvas, yMin, yMax) {
+      const w = canvas.width;
+      const h = canvas.height;
+      const x = (t - tMin) / (tMax - tMin) * w;
+      const yCanvas = h - (y - yMin) / (yMax - yMin) * h;
+      return { x, y: yCanvas };
+    }
+
+    function drawAxes(ctx, canvas, yMin, yMax) {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      ctx.strokeStyle = '#ccc';
+      ctx.lineWidth = 1;
+
+      // Eje X (y = 0)
+      if (yMin < 0 && yMax > 0) {
+        const p0 = toCanvasCoords(0, 0, canvas, yMin, yMax);
+        ctx.beginPath();
+        ctx.moveTo(0, p0.y);
+        ctx.lineTo(w, p0.y);
+        ctx.stroke();
+      }
+
+      // Eje Y (t = 0) dentro del rango
+      if (tMin < 0 && tMax > 0) {
+        const p0 = toCanvasCoords(0, yMin, canvas, yMin, yMax);
+        const p1 = toCanvasCoords(0, yMax, canvas, yMin, yMax);
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.stroke();
+      }
+    }
+
+    function drawFunction(ctx, canvas, func, yMin, yMax) {
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+
+      ctx.beginPath();
+      let first = true;
+      const steps = 300;
+      for (let i = 0; i <= steps; i++) {
+        const t = tMin + (i / steps) * (tMax - tMin);
+        let y;
+        try {
+          y = func(t);
+        } catch (e) {
+          continue;
+        }
+        if (!isFinite(y)) continue;
+        const p = toCanvasCoords(t, y, canvas, yMin, yMax);
+        if (first) {
+          ctx.moveTo(p.x, p.y);
+          first = false;
+        } else {
+          ctx.lineTo(p.x, p.y);
+        }
+      }
+      ctx.stroke();
+    }
+
+    function drawCurrentPoint(ctx, canvas, func, t, yMin, yMax) {
+      let y;
+      try {
+        y = func(t);
+      } catch (e) {
+        return;
+      }
+      if (!isFinite(y)) return;
+      const p = toCanvasCoords(t, y, canvas, yMin, yMax);
+
+      // Línea vertical
+      ctx.strokeStyle = '#888';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(p.x, 0);
+      ctx.lineTo(p.x, canvas.height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Punto
+      ctx.fillStyle = '#d22';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function update() {
+      if (!fPos || !fVel || !fAcc) return;
+
+      const t = parseFloat(tRange.value);
+      tValue.textContent = t.toFixed(1);
+
+      let p, v, a;
+      try {
+        p = fPos(t);
+        v = fVel(t);
+        a = fAcc(t);
+      } catch (e) {
+        return;
+      }
+
+      pValue.textContent = isFinite(p) ? p.toFixed(4) : 'NaN';
+      vValue.textContent = isFinite(v) ? v.toFixed(4) : 'NaN';
+      aValue.textContent = isFinite(a) ? a.toFixed(4) : 'NaN';
+
+      // Rango para cada gráfica
+      const rangePos = computeRange(fPos);
+      const rangeVel = computeRange(fVel);
+      const rangeAcc = computeRange(fAcc);
+
+      // Posición
+      drawAxes(posCtx, posCanvas, rangePos.yMin, rangePos.yMax);
+      drawFunction(posCtx, posCanvas, fPos, rangePos.yMin, rangePos.yMax);
+      drawCurrentPoint(posCtx, posCanvas, fPos, t, rangePos.yMin, rangePos.yMax);
+
+      // Velocidad
+      drawAxes(velCtx, velCanvas, rangeVel.yMin, rangeVel.yMax);
+      drawFunction(velCtx, velCanvas, fVel, rangeVel.yMin, rangeVel.yMax);
+      drawCurrentPoint(velCtx, velCanvas, fVel, t, rangeVel.yMin, rangeVel.yMax);
+
+      // Aceleración
+      drawAxes(accCtx, accCanvas, rangeAcc.yMin, rangeAcc.yMax);
+      drawFunction(accCtx, accCanvas, fAcc, rangeAcc.yMin, rangeAcc.yMax);
+      drawCurrentPoint(accCtx, accCanvas, fAcc, t, rangeAcc.yMin, rangeAcc.yMax);
+
+      // Mensaje cuando la velocidad es cercana a 0
+      if (isFinite(v) && Math.abs(v) < 0.1) {
+        zeroMessage.innerHTML =
+          '<span class="highlight">La velocidad es aproximadamente cero en este instante.</span><br>' +
+          'Aquí el objeto se detiene un momento o está cambiando de dirección.';
+      } else {
+        zeroMessage.textContent = '';
+      }
+    }
+
+    // Listeners
+    tRange.addEventListener('input', update);
+    applyBtn.addEventListener('click', function () {
+      applyExpression();
+    });
+    exampleSelect.addEventListener('change', function () {
+      setExample(this.value);
+      if (this.value !== 'custom') {
+        applyExpression();
+      }
+    });
+
+    // Inicializar con el primer ejemplo
+    setExample('parabola');
+    applyExpression();
+  </script>
+</body>
+</html>
